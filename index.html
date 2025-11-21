@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>123 Offerte Pazzesche</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Favicon (inline SVG) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23FFD700' stroke='%23FF3333' stroke-width='6'/%3E%3Ctext x='50' y='58' font-size='36' font-family='Poppins, sans-serif' text-anchor='middle' fill='%23FF3333'%3E123%3C/text%3E%3C/svg%3E">
+
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #fff9e6; }
+    h1,h2 { font-family: 'Montserrat', sans-serif; }
+    /* small tweaks for modal */
+    .modal-bg { background: rgba(17,17,17,0.6); }
+    .card-img { height: 180px; object-fit: cover; }
+  </style>
+</head>
+<body class="text-gray-900">
+
+  <!-- HEADER -->
+  <header class="bg-red-600 text-white py-6 shadow-md">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold">🔥 123 OFFerte Pazzesche 🔥</h1>
+          <p class="text-sm opacity-90">Offerte folli ogni giorno — modifica direttamente qui sotto!</p>
+        </div>
+        <div class="text-right">
+          <button id="addProductBtn" class="bg-yellow-400 text-red-700 px-4 py-2 rounded font-bold shadow hover:scale-105 transition">+ Aggiungi prodotto</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER -->
+  <section class="mt-6">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="bg-yellow-400 border-2 border-red-600 rounded-xl p-5 text-center shadow">
+        <h2 class="text-2xl md:text-3xl font-bold text-red-700 animate-pulse">🎁 OFFERTA DEL GIORNO — Salva fino al 70%!</h2>
+        <p class="mt-2 text-sm md:text-base">Clicca "Modifica" su qualunque prodotto per cambiare titolo, descrizione, prezzo e immagine.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTS GRID -->
+  <main class="max-w-6xl mx-auto px-4 mt-8">
+    <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <!-- cards renderate via JS -->
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="mt-12 bg-gray-900 text-white py-6">
+    <div class="max-w-6xl mx-auto px-4 text-center text-sm">
+      © <span id="year"></span> 123 Offerte Pazzesche. Tutti i diritti riservati.
+    </div>
+  </footer>
+
+  <!-- EDIT / ADD MODAL -->
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center modal-bg z-50">
+    <div class="bg-white rounded-xl w-11/12 max-w-lg p-6 shadow-lg">
+      <h3 id="modalTitle" class="text-xl font-bold mb-3">Modifica prodotto</h3>
+      <form id="productForm" class="space-y-3">
+        <input type="hidden" id="productId" />
+        <div>
+          <label class="block text-sm font-medium">Titolo</label>
+          <input id="title" class="mt-1 block w-full border rounded px-3 py-2" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Descrizione</label>
+          <textarea id="description" class="mt-1 block w-full border rounded px-3 py-2" rows="3"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Prezzo (€)</label>
+          <input id="price" type="number" step="0.01" class="mt-1 block w-full border rounded px-3 py-2" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Immagine (URL)</label>
+          <input id="image" class="mt-1 block w-full border rounded px-3 py-2" placeholder="https://..." />
+        </div>
+        <div class="flex items-center justify-between mt-4">
+          <div class="flex gap-2">
+            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded font-bold">Salva</button>
+            <button type="button" id="cancelBtn" class="px-4 py-2 rounded border">Annulla</button>
+          </div>
+          <button type="button" id="deleteBtn" class="text-sm text-red-600 underline hidden">Elimina prodotto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Small instructions -->
+  <div class="fixed bottom-4 right-4 bg-white border shadow p-3 rounded-lg text-sm">
+    <strong>Hint:</strong> usa i pulsanti "Modifica" sulle card. Le modifiche vengono salvate automaticamente.
+  </div>
+
+  <!-- SCRIPTS -->
+  <script>
+    // current year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // key localStorage
+    const STORAGE_KEY = '123_offerte_products_v1';
+
+    // default products (si possono sovrascrivere in localStorage)
+    const defaultProducts = [
+      { id: genId(), title: 'Cuffie Wireless Turbo', description: 'Suono potente e bassi profondi.', price: 29.99, image: 'https://picsum.photos/seed/headphones/600/400' },
+      { id: genId(), title: 'Smartwatch Sport', description: 'Monitoraggio battito e notifiche.', price: 49.50, image: 'https://picsum.photos/seed/watch/600/400' },
+      { id: genId(), title: 'Speaker Bluetooth XXL', description: 'Potente e portatile, batteria 24h.', price: 39.00, image: 'https://picsum.photos/seed/speaker/600/400' },
+      { id: genId(), title: 'Zaino Trek 30L', description: 'Impermeabile, tasche multiple.', price: 19.90, image: 'https://picsum.photos/seed/backpack/600/400' },
+      { id: genId(), title: 'Lampada LED Smart', description: 'Colori regolabili via app.', price: 12.49, image: 'https://picsum.photos/seed/lamp/600/400' },
+      { id: genId(), title: 'Mouse Gaming RGB', description: 'Ergonomico con DPI regolabile.', price: 15.75, image: 'https://picsum.photos/seed/mouse/600/400' }
+    ];
+
+    // utilities
+    function genId(){ return 'p_' + Math.random().toString(36).slice(2,9); }
+    function saveProducts(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+    function loadProducts(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null } catch(e){ return null } }
+
+    // load or init
+    let products = loadProducts();
+    if(!products || !Array.isArray(products) || products.length === 0){
+      products = defaultProducts;
+      saveProducts(products);
+    }
+
+    // DOM refs
+    const grid = document.getElementById('productsGrid');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const form = document.getElementById('productForm');
+    const productIdInput = document.getElementById('productId');
+    const titleInput = document.getElementById('title');
+    const descInput = document.getElementById('description');
+    const priceInput = document.getElementById('price');
+    const imageInput = document.getElementById('image');
+    const addProductBtn = document.getElementById('addProductBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+
+    // render function
+    function renderProducts(){
+      grid.innerHTML = '';
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'bg-white shadow-lg rounded-xl overflow-hidden border';
+        card.innerHTML = `
+          <img src="${escapeHtml(p.image || 'https://via.placeholder.com/600x400')}" alt="${escapeHtml(p.title)}" class="w-full card-img">
+          <div class="p-4">
+            <h3 class="text-lg font-bold">${escapeHtml(p.title)}</h3>
+            <p class="text-sm text-gray-600 mt-1">${escapeHtml(p.description)}</p>
+            <div class="mt-3 flex items-center justify-between">
+              <div>
+                <span class="text-2xl font-extrabold text-red-600">€ ${Number(p.price).toFixed(2)}</span>
+              </div>
+              <div class="flex gap-2">
+                <button class="editBtn bg-yellow-400 text-red-700 px-3 py-1 rounded font-semibold">Modifica</button>
+                <button class="buyBtn bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Compra</button>
+              </div>
+            </div>
+          </div>
+        `;
+        // attach events
+        const editBtn = card.querySelector('.editBtn');
+        editBtn.addEventListener('click', () => openEditModal(p.id));
+        const buyBtn = card.querySelector('.buyBtn');
+        buyBtn.addEventListener('click', () => alert('Aggiunto al carrello: ' + p.title));
+        grid.appendChild(card);
+      });
+    }
+
+    // escape to avoid injection
+    function escapeHtml(s){
+      if(!s) return '';
+      return String(s).replace(/[&<>"'`=\/]/g, function (c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'}[c];
+      });
+    }
+
+    // open modal to edit a product
+    function openEditModal(id){
+      const prod = products.find(x => x.id === id);
+      if(!prod) return;
+      productIdInput.value = prod.id;
+      titleInput.value = prod.title;
+      descInput.value = prod.description;
+      priceInput.value = prod.price;
+      imageInput.value = prod.image || '';
+      modalTitle.textContent = 'Modifica prodotto';
+      deleteBtn.style.display = 'inline-block';
+      showModal();
+    }
+
+    // open blank modal to add
+    function openAddModal(){
+      productIdInput.value = '';
+      titleInput.value = '';
+      descInput.value = '';
+      priceInput.value = '';
+      imageInput.value = '';
+      modalTitle.textContent = 'Aggiungi nuovo prodotto';
+      deleteBtn.style.display = 'none';
+      showModal();
+    }
+
+    // show / hide modal
+    function showModal(){ modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    function hideModal(){ modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+    // form submit
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = productIdInput.value;
+      const updated = {
+        id: id || genId(),
+        title: titleInput.value.trim() || 'Prodotto senza titolo',
+        description: descInput.value.trim() || '',
+        price: parseFloat(priceInput.value) || 0,
+        image: imageInput.value.trim() || 'https://via.placeholder.com/600x400'
+      };
+      if(id){
+        products = products.map(p => p.id === id ? updated : p);
+      } else {
+        products.unshift(updated); // nuovo prodotto in cima
+      }
+      saveProducts(products);
+      renderProducts();
+      hideModal();
+    });
+
+    // delete product
+    deleteBtn.addEventListener('click', () => {
+      const id = productIdInput.value;
+      if(!id) return;
+      if(confirm('Sei sicuro di voler eliminare questo prodotto?')) {
+        products = products.filter(p => p.id !== id);
+        saveProducts(products);
+        renderProducts();
+        hideModal();
+      }
+    });
+
+    // cancel
+    cancelBtn.addEventListener('click', () => hideModal());
+
+    // overlay click to close
+    modal.addEventListener('click', (e) => {
+      if(e.target === modal) hideModal();
+    });
+
+    // add product button
+    addProductBtn.addEventListener('click', openAddModal);
+
+    // helper: reset to defaults function (for debugging)
+    window.resetProductsToDefaults = function(){
+      products = defaultProducts;
+      saveProducts(products);
+      renderProducts();
+      alert('Prodotti ripristinati ai valori iniziali.');
+    };
+
+    // initial render
+    renderProducts();
+
+    // keyboard shortcut: press E to add new product (quick)
+    window.addEventListener('keydown', (e) => {
+      if(e.key.toLowerCase() === 'e' && !modal.classList.contains('flex')) {
+        openAddModal();
+      }
+    });
+
+  </script>
+</body>
+</html>
